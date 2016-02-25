@@ -171,10 +171,12 @@ func build(conf *Config, s3Client *s3.S3, kubeClient *client.Client, builderKey,
 		return fmt.Errorf("creating builder pod (%s)", err)
 	}
 
+	log.Debug("Waiting for pod start")
 	if err := waitForPod(kubeClient, newPod.Namespace, newPod.Name, conf.BuilderPodTickDuration(), conf.BuilderPodWaitDuration()); err != nil {
 		return fmt.Errorf("watching events for builder pod startup (%s)", err)
 	}
 
+	log.Debug("Attempting to follow logs")
 	req := kubeClient.Get().Namespace(newPod.Namespace).Name(newPod.Name).Resource("pods").SubResource("log").VersionedParams(
 		&api.PodLogOptions{
 			Follow: true,
@@ -194,6 +196,7 @@ func build(conf *Config, s3Client *s3.S3, kubeClient *client.Client, builderKey,
 
 	// check the state and exit code of the build pod.
 	// if the code is not 0 return error
+	log.Debug("Waiting for pod to finish")
 	if err := waitForPodEnd(kubeClient, newPod.Namespace, newPod.Name, conf.BuilderPodTickDuration(), conf.BuilderPodWaitDuration()); err != nil {
 		return fmt.Errorf("error getting builder pod status (%s)", err)
 	}

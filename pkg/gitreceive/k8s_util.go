@@ -149,7 +149,15 @@ func addEnvToPod(pod api.Pod, key, value string) {
 // waitForPod waits for a pod in state running or failed
 func waitForPod(c *client.Client, ns, podName string, interval, timeout time.Duration) error {
 	condition := func(pod *api.Pod) (bool, error) {
+		fmt.Printf("waitForPod status: %s\n", pod.Status.Phase)
+		// Pending pods should retry
+		if pod.Status.Phase == api.PodPending {
+			return false, nil
+		}
 		if pod.Status.Phase == api.PodRunning {
+			return true, nil
+		}
+		if pod.Status.Phase == api.PodSucceeded {
 			return true, nil
 		}
 		if pod.Status.Phase == api.PodFailed {
@@ -164,6 +172,7 @@ func waitForPod(c *client.Client, ns, podName string, interval, timeout time.Dur
 // waitForPodEnd waits for a pod in state succeeded or failed
 func waitForPodEnd(c *client.Client, ns, podName string, interval, timeout time.Duration) error {
 	condition := func(pod *api.Pod) (bool, error) {
+		fmt.Printf("waitForPodEnd status: %s\n", pod.Status.Phase)
 		if pod.Status.Phase == api.PodSucceeded {
 			return true, nil
 		}
@@ -183,14 +192,18 @@ func waitForPodCondition(c *client.Client, ns, podName string, condition func(po
 		pod, err := c.Pods(ns).Get(podName)
 		if err != nil {
 			if apierrs.IsNotFound(err) {
+				fmt.Printf("waitForPodCondition IsNotFound: %s\n", err)
 				return false, nil
 			}
 		}
 
 		done, err := condition(pod)
 		if done {
+			fmt.Printf("waitForPodCondition is done: %s\n", done)
 			return true, nil
 		}
+
+		fmt.Printf("waitForPodCondition has pod (%s) in phase (%s)\n", pod.Name, pod.Status.Phase)
 
 		return false, nil
 	})
