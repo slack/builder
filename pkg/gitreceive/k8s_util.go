@@ -13,7 +13,7 @@ import (
 
 const (
 	slugBuilderName    = "deis-slugbuilder"
-	slugBuilderImage   = "quay.io/deisci/slugbuilder:v2-beta"
+	slugBuilderImage   = "quay.io/jhansen/slugbuilder:0.0.1-20160228175627"
 	dockerBuilderName  = "deis-dockerbuilder"
 	dockerBuilderImage = "quay.io/deisci/dockerbuilder:v2-beta"
 
